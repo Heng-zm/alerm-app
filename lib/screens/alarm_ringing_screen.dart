@@ -19,7 +19,7 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
   void initState() {
     super.initState();
     _passwordController = TextEditingController();
-    // The sound is expected to be already playing via the AlarmService.
+    // The sound is expected to be already playing via the AlarmService background callback.
   }
 
   @override
@@ -28,21 +28,31 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
     super.dispose();
   }
 
-  // The main function to stop the alarm.
+  /// Handles stopping the sound, rescheduling the alarm for the next day, and closing the screen.
   void _dismissAlarm() {
     final alarmService = AlarmService();
-    // Stop the audio playback.
     alarmService.stopAudio();
-    // Cancel the alarm to remove persistent notification and prevent re-triggering.
-    alarmService.cancelAlarm(widget.alarm.id);
 
-    // Safely pop the screen.
+    // IMPROVEMENT: Reschedule the alarm for the next day to make it recurring.
+    final nextDay = widget.alarm.time.add(const Duration(days: 1));
+    final rescheduledAlarm = Alarm(
+      id: widget.alarm.id,
+      time: nextDay,
+      label: widget.alarm.label,
+      sound: widget.alarm.sound,
+      loopSound: widget.alarm.loopSound,
+      password: widget.alarm.password,
+      isActive: widget.alarm.isActive,
+    );
+    alarmService.scheduleAlarm(rescheduledAlarm);
+
+    // Close the ringing screen.
     if (Navigator.canPop(context)) {
       Navigator.pop(context);
     }
   }
 
-  // Validates the password and dismisses the alarm on success.
+  /// Validates the password and dismisses the alarm on success.
   void _validatePassword() {
     final enteredPassword = _passwordController.text;
     if (enteredPassword == widget.alarm.password) {
@@ -52,7 +62,6 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
         _errorMessage = 'Incorrect password. Please try again.';
       });
       _passwordController.clear();
-      // Optionally, add a vibration for haptic feedback on failure.
     }
   }
 
@@ -73,7 +82,6 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
             children: [
               const Spacer(flex: 2),
               Text(
-                // Format the time from the DateTime object
                 '${widget.alarm.time.hour.toString().padLeft(2, '0')}:${widget.alarm.time.minute.toString().padLeft(2, '0')}',
                 style: const TextStyle(
                   fontSize: 82,
@@ -102,7 +110,6 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
     );
   }
 
-  // Builds the UI for a simple "Dismiss" button.
   List<Widget> _buildDismissUI() {
     return [
       SizedBox(
@@ -126,7 +133,6 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
     ];
   }
 
-  // Builds the UI for password entry and an "Unlock" button.
   List<Widget> _buildPasswordUI() {
     return [
       TextField(
@@ -147,7 +153,6 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
           ),
         ),
         onChanged: (_) {
-          // Clear error message on new input
           if (_errorMessage != null) {
             setState(() {
               _errorMessage = null;
@@ -161,7 +166,7 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
         child: ElevatedButton(
           onPressed: _validatePassword,
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF34C759), // Green for unlock
+            backgroundColor: const Color(0xFF34C759),
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),

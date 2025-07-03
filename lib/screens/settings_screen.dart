@@ -20,7 +20,8 @@ class SettingsScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) {
-        // Use `Provider.of` with `listen: false` when you are only calling a method.
+        // IMPROVEMENT: Use listen: false when you are only calling a method
+        // from the provider and not listening for UI updates. This is more performant.
         final themeProvider =
             Provider.of<ThemeProvider>(context, listen: false);
 
@@ -58,7 +59,8 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Here we listen to changes to display the current color
+    // Here we listen (listen: true is the default) so that the UI of this screen
+    // rebuilds when the accent color changes, updating the trailing CircleAvatar.
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return Scaffold(
